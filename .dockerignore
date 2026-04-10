@@ -11,6 +11,7 @@ storage/logs/*
 rr
 frankenphp
 vendor
+vendor/*
 
 # 2. Ignore common files/directories we don't need
 fly.toml

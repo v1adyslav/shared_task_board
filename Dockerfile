@@ -5,17 +5,6 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM php:8.3-cli-bookworm AS vendor
-WORKDIR /app
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-COPY composer.json ./
-RUN composer install \
-    --no-dev \
-    --no-interaction \
-    --no-progress \
-    --prefer-dist \
-    --optimize-autoloader
-
 FROM php:8.3-cli-bookworm
 WORKDIR /var/www/html
 
@@ -31,8 +20,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         pdo_mysql \
     && rm -rf /var/lib/apt/lists/*
 
+
+FROM php:8.3-cli-bookworm AS composer_stage
+WORKDIR /app
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY composer.json ./
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --no-progress \
+    --prefer-dist \
+    --optimize-autoloader
+
 COPY . .
-COPY --from=vendor /app/vendor ./vendor
+COPY --from=composer_stage /app/vendor ./vendor
 COPY --from=assets /app/public/build ./public/build
 
 RUN mkdir -p storage/framework/{cache,sessions,views} bootstrap/cache \
